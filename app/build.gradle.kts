@@ -64,5 +64,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     kapt("androidx.room:room-compiler:$room_version")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("androidx.datastore:datastore-preferences:1.1.0")
+    implementation("androidx.navigation:navigation-compose:2.7.3")
 
 }

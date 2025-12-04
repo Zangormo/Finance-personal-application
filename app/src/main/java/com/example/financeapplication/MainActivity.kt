@@ -10,7 +10,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.financeapplication.ui.theme.FinanceApplicationTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,9 +19,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.financeapplication.screens.EssentialsScreen
+import com.example.financeapplication.screens.WishlistScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,18 +33,39 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FinanceApplicationTheme {
+                val navController = rememberNavController()
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainScreen(
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main_screen",
                         modifier = Modifier.padding(innerPadding)
-                    )
+                    ) {
+                        composable("main_screen") {
+                            MainScreen(
+                                onTileClick = { tile ->
+                                    when (tile) {
+                                        "Essentials" -> navController.navigate("essentials_screen")
+                                        "Wishlist" -> navController.navigate("wishlist_screen")
+                                    }
+                                }
+
+                            )
+                        }
+                        composable("essentials_screen") {
+                            EssentialsScreen(onBackPress = { navController.popBackStack() })
+                        }
+                        composable("wishlist_screen") {
+                            WishlistScreen(onBackPress = { navController.popBackStack() })
+                        }
+                    }
                 }
             }
         }
     }
 }
-
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(modifier: Modifier = Modifier, onTileClick: (String) -> Unit) {
     val items = listOf(
         "Essentials",
         "Wishlist",
@@ -66,18 +90,18 @@ fun MainScreen(modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(items) { title ->
-            TileItem(title = title)
+            TileItem(title = title, onClick = { onTileClick(title) })
         }
     }
 }
 
 @Composable
-fun TileItem(title: String) {
+fun TileItem(title: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .clickable { /* TODO: open screen */ },
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(

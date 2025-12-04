@@ -1,3 +1,5 @@
+package com.example.financeapplication.classes
+
 import androidx.room.*
 
 @Dao

@@ -1,3 +1,5 @@
+package com.example.financeapplication.classes
+
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

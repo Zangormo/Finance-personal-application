@@ -1,3 +1,5 @@
+package com.example.financeapplication.classes
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
