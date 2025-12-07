@@ -27,6 +27,14 @@ import androidx.navigation.compose.rememberNavController
 import com.example.financeapplication.screens.EssentialsScreen
 import com.example.financeapplication.screens.WishlistScreen
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.example.financeapplication.datastores.UserPreferencesDataStore
+import com.example.financeapplication.screens.WelcomeScreen
+import kotlinx.coroutines.launch
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,29 +42,45 @@ class MainActivity : ComponentActivity() {
         setContent {
             FinanceApplicationTheme {
                 val navController = rememberNavController()
+                val context = LocalContext.current
+                val scope = rememberCoroutineScope()
+                val isFirstRunState by UserPreferencesDataStore.isFirstRun(context).collectAsState(initial = null)
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = "main_screen",
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("main_screen") {
-                            MainScreen(
-                                onTileClick = { tile ->
-                                    when (tile) {
-                                        "Essentials" -> navController.navigate("essentials_screen")
-                                        "Wishlist" -> navController.navigate("wishlist_screen")
+                if (isFirstRunState != null) {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = if (isFirstRunState == true) "welcome_screen" else "main_screen",
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable("welcome_screen") {
+                                WelcomeScreen(onContinueClicked = { balance ->
+                                    scope.launch {
+                                        UserPreferencesDataStore.setOverallBalance(context, balance)
+                                        UserPreferencesDataStore.setFirstRunCompleted(context)
+                                        navController.navigate("main_screen") {
+                                            popUpTo("welcome_screen") { inclusive = true }
+                                        }
                                     }
-                                }
+                                })
+                            }
+                            composable("main_screen") {
+                                MainScreen(
+                                    onTileClick = { tile ->
+                                        when (tile) {
+                                            "Essentials" -> navController.navigate("essentials_screen")
+                                            "Wishlist" -> navController.navigate("wishlist_screen")
+                                        }
+                                    }
 
-                            )
-                        }
-                        composable("essentials_screen") {
-                            EssentialsScreen(onBackPress = { navController.popBackStack() })
-                        }
-                        composable("wishlist_screen") {
-                            WishlistScreen(onBackPress = { navController.popBackStack() })
+                                )
+                            }
+                            composable("essentials_screen") {
+                                EssentialsScreen(onBackPress = { navController.popBackStack() })
+                            }
+                            composable("wishlist_screen") {
+                                WishlistScreen(onBackPress = { navController.popBackStack() })
+                            }
                         }
                     }
                 }
