@@ -26,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.financeapplication.screens.EssentialsScreen
 import com.example.financeapplication.screens.WishlistScreen
+import com.example.financeapplication.screens.AddSpendingScreen
+import com.example.financeapplication.screens.AddIncomeScreen
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -70,6 +72,8 @@ class MainActivity : ComponentActivity() {
                                         when (tile) {
                                             "Essentials" -> navController.navigate("essentials_screen")
                                             "Wishlist" -> navController.navigate("wishlist_screen")
+                                            "Add spending" -> navController.navigate("add_spending_screen")
+                                            "Add income" -> navController.navigate("add_income_screen")
                                         }
                                     }
 
@@ -80,6 +84,12 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("wishlist_screen") {
                                 WishlistScreen(onBackPress = { navController.popBackStack() })
+                            }
+                            composable("add_spending_screen") {
+                                AddSpendingScreen(onBackPress = { navController.popBackStack() })
+                            }
+                            composable("add_income_screen") {
+                                AddIncomeScreen(onBackPress = { navController.popBackStack() })
                             }
                         }
                     }

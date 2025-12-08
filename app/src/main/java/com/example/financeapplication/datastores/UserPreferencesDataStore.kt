@@ -38,4 +38,11 @@ object UserPreferencesDataStore {
             prefs[OVERALL_BALANCE_KEY] = balance
         }
     }
+
+    suspend fun updateBalance(context: Context, amountChange: Float) {
+        context.dataStoreUserPreferences.edit { prefs ->
+            val current = prefs[OVERALL_BALANCE_KEY] ?: 0.0f
+            prefs[OVERALL_BALANCE_KEY] = current + amountChange
+        }
+    }
 }
