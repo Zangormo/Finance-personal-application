@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -40,12 +41,27 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Wishlist",
-            style = MaterialTheme.typography.headlineLarge,
-            color = colors.primaryText,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        // Header with back button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { onBackPress() }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = colors.primaryText
+                )
+            }
+            Text(
+                text = "Wishlist",
+                style = MaterialTheme.typography.headlineLarge,
+                color = colors.primaryText,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
 
         // Input Card
         Card(
