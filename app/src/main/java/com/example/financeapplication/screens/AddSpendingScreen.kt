@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -367,10 +368,11 @@ fun ItemCheckBox(
             contentAlignment = Alignment.Center
         ) {
             if (isSelected) {
-                Text(
-                    text = "✓",
-                    color = colors.primaryText,
-                    style = MaterialTheme.typography.bodySmall
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Selected",
+                    tint = colors.primaryText,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }

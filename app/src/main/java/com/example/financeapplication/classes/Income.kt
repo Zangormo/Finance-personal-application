@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class Income(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val sum: Float,
-    val description: String
+    val description: String,
+    val date: String
 )

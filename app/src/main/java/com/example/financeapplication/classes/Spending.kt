@@ -16,6 +16,7 @@ data class Spending(
     val sum: Float,
     @TypeConverters(StringListConverter::class)
     val items: List<String>,
-    val necessity: NecessityLevel = NecessityLevel.NECESSARY
+    val necessity: NecessityLevel = NecessityLevel.NECESSARY,
+    val date: String
 )
 
