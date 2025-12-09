@@ -31,7 +31,7 @@ import com.example.financeapplication.screens.AddIncomeScreen
 import com.example.financeapplication.screens.SavingsScreen
 import com.example.financeapplication.screens.IncomeHistoryScreen
 import com.example.financeapplication.screens.SpendingHistoryScreen
-
+import com.example.financeapplication.screens.OverviewScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,6 +78,7 @@ class MainActivity : ComponentActivity() {
                                             "Add spending" -> navController.navigate("add_spending_screen")
                                             "Add income" -> navController.navigate("add_income_screen")
                                             "Savings" -> navController.navigate("savings_screen")
+                                            "Overview" -> navController.navigate("overview_screen")
                                             "Spending history" -> navController.navigate("spending_history_screen")
                                             "Income history" -> navController.navigate("income_history_screen")
                                         }
@@ -99,6 +100,9 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("savings_screen") {
                                 SavingsScreen(onBackPress = { navController.popBackStack() })
+                            }
+                            composable("overview_screen") {
+                                OverviewScreen(onBackPress = { navController.popBackStack() })
                             }
                             composable("income_history_screen") {
                                 IncomeHistoryScreen(onBackPress = { navController.popBackStack() })
