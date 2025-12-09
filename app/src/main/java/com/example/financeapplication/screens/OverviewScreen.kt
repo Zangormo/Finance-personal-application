@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.financeapplication.classes.NecessityLevel
 import com.example.financeapplication.datastores.SpendingDataStore
+import com.example.financeapplication.datastores.IncomeDataStore
 import com.example.financeapplication.datastores.UserPreferencesDataStore
 import com.example.financeapplication.ui.theme.appColors
 import java.util.Calendar
@@ -37,6 +39,9 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
 
     val spendingsFlow = SpendingDataStore.getSpendings(context)
     val spendings by spendingsFlow.collectAsState(initial = emptyList())
+
+    val incomesFlow = IncomeDataStore.getIncomes(context)
+    val incomes by incomesFlow.collectAsState(initial = emptyList())
 
     // Period selection states
     var selectedPeriod by remember { mutableStateOf(PeriodType.MONTH) }
@@ -212,7 +217,7 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(start = 24.dp, end = 24.dp, top = 40.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     PieChart(
@@ -221,7 +226,7 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                         notNeededAmount = notNeededTotal,
                         modifier = Modifier
                             .size(200.dp)
-                            .padding(vertical = 16.dp)
+                            .padding(top = 16.dp, bottom = 16.dp)
                     )
 
                     // Legend
@@ -230,21 +235,21 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         LegendItem(
-                            label = "",
+                            label = "Necessary",
                             amount = necessaryTotal,
-                            color = Color.Green,
+                            color = Color(33, 117, 30),
                             total = grandTotal
                         )
                         LegendItem(
-                            label = "",
+                            label = "Medium",
                             amount = mediumTotal,
-                            color = Color.Yellow,
+                            color = Color(212, 130, 49),
                             total = grandTotal
                         )
                         LegendItem(
-                            label = "",
+                            label = "Not Needed",
                             amount = notNeededTotal,
-                            color = Color.Red,
+                            color = Color(179, 52, 52),
                             total = grandTotal
                         )
                     }
@@ -298,6 +303,34 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                         color = colors.primaryText
                     )
                 }
+            }
+        }
+
+        // Total income
+        val totalIncome = incomes.sumOf { it.amount.toDouble() }.toFloat()
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Total Income",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.placeholderText
+                )
+                Text(
+                    text = "$${String.format("%.2f", totalIncome)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.primaryText
+                )
             }
         }
 
@@ -355,24 +388,30 @@ fun MonthYearSelector(
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .clickable { expandedMonth = !expandedMonth },
+                    .height(56.dp),
                 shape = RoundedCornerShape(8.dp),
                 readOnly = true,
+                enabled = false,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colors.primaryText,
-                    unfocusedTextColor = colors.primaryText,
-                    cursorColor = colors.primaryText,
-                    focusedBorderColor = colors.border,
-                    unfocusedBorderColor = colors.border,
-                    focusedLabelColor = colors.primaryText,
-                    unfocusedLabelColor = colors.primaryText
-                )
+                    disabledTextColor = colors.primaryText,
+                    disabledBorderColor = colors.border,
+                    disabledTrailingIconColor = colors.primaryText
+                ),
+                trailingIcon = {
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null
+                    )
+                }
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { expandedMonth = !expandedMonth }
             )
             DropdownMenu(
                 expanded = expandedMonth,
-                onDismissRequest = { expandedMonth = false },
-                modifier = Modifier.fillMaxWidth()
+                onDismissRequest = { expandedMonth = false }
             ) {
                 months.forEachIndexed { index, month ->
                     DropdownMenuItem(
@@ -396,24 +435,30 @@ fun MonthYearSelector(
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .clickable { expandedYear = !expandedYear },
+                    .height(56.dp),
                 shape = RoundedCornerShape(8.dp),
                 readOnly = true,
+                enabled = false,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colors.primaryText,
-                    unfocusedTextColor = colors.primaryText,
-                    cursorColor = colors.primaryText,
-                    focusedBorderColor = colors.border,
-                    unfocusedBorderColor = colors.border,
-                    focusedLabelColor = colors.primaryText,
-                    unfocusedLabelColor = colors.primaryText
-                )
+                    disabledTextColor = colors.primaryText,
+                    disabledBorderColor = colors.border,
+                    disabledTrailingIconColor = colors.primaryText
+                ),
+                trailingIcon = {
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null
+                    )
+                }
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { expandedYear = !expandedYear }
             )
             DropdownMenu(
                 expanded = expandedYear,
-                onDismissRequest = { expandedYear = false },
-                modifier = Modifier.fillMaxWidth()
+                onDismissRequest = { expandedYear = false }
             ) {
                 yearRange.reversed().forEach { year ->
                     DropdownMenuItem(
@@ -446,24 +491,30 @@ fun YearSelector(
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .clickable { expandedYear = !expandedYear },
+                .height(56.dp),
             shape = RoundedCornerShape(8.dp),
             readOnly = true,
+            enabled = false,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = colors.primaryText,
-                unfocusedTextColor = colors.primaryText,
-                cursorColor = colors.primaryText,
-                focusedBorderColor = colors.border,
-                unfocusedBorderColor = colors.border,
-                focusedLabelColor = colors.primaryText,
-                unfocusedLabelColor = colors.primaryText
-            )
+                disabledTextColor = colors.primaryText,
+                disabledBorderColor = colors.border,
+                disabledTrailingIconColor = colors.primaryText
+            ),
+            trailingIcon = {
+                Icon(
+                    Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null
+                )
+            }
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { expandedYear = !expandedYear }
         )
         DropdownMenu(
             expanded = expandedYear,
-            onDismissRequest = { expandedYear = false },
-            modifier = Modifier.fillMaxWidth()
+            onDismissRequest = { expandedYear = false }
         ) {
             yearRange.reversed().forEach { year ->
                 DropdownMenuItem(
@@ -477,13 +528,13 @@ fun YearSelector(
         }
     }
 }
+
 @Composable
 fun PieChart(
     necessaryAmount: Float,
     mediumAmount: Float,
     notNeededAmount: Float,
-    modifier: Modifier = Modifier,
-    chartSize: androidx.compose.ui.unit.Dp = 160.dp
+    modifier: Modifier = Modifier
 ) {
     val total = necessaryAmount + mediumAmount + notNeededAmount
     if (total == 0f) return
@@ -495,7 +546,7 @@ fun PieChart(
     // Пробел между секциями в градусах
     val gapAngle = 3f
 
-    Canvas(modifier = modifier.size(chartSize)) {
+    Canvas(modifier = modifier) {
         val outerRadius = size.minDimension / 2
         val innerRadius = outerRadius * 0.6f // 60% от внешнего радиуса для создания "дырки"
         val centerX = size.width / 2
@@ -506,7 +557,7 @@ fun PieChart(
         // Draw Necessary (Green)
         if (necessaryAmount > 0) {
             drawArc(
-                color = Color.Green,
+                color = Color(33, 117, 30),
                 startAngle = -90f,
                 sweepAngle = necessaryPercentage * 360f - gapAngle,
                 useCenter = false,
@@ -522,7 +573,7 @@ fun PieChart(
         // Draw Medium (Yellow)
         if (mediumAmount > 0) {
             drawArc(
-                color = Color.Yellow,
+                color = Color(212, 130, 49),
                 startAngle = -90f + necessaryPercentage * 360f,
                 sweepAngle = mediumPercentage * 360f - gapAngle,
                 useCenter = false,
@@ -538,7 +589,7 @@ fun PieChart(
         // Draw Not Needed (Red)
         if (notNeededAmount > 0) {
             drawArc(
-                color = Color.Red,
+                color = Color(179, 52, 52),
                 startAngle = -90f + (necessaryPercentage + mediumPercentage) * 360f,
                 sweepAngle = notNeededPercentage * 360f - gapAngle,
                 useCenter = false,
@@ -572,23 +623,18 @@ fun LegendItem(
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .background(color, RoundedCornerShape(4.dp))
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .background(color, RoundedCornerShape(4.dp))
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(modifier = Modifier.weight(1f))
         Text(
             text = "$${String.format("%.2f", amount)} (${String.format("%.1f", percentage)}%)",
             style = MaterialTheme.typography.bodySmall

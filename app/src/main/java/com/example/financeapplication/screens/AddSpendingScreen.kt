@@ -204,9 +204,9 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
                                     .border(2.dp, colors.border, CircleShape)
                                     .background(
                                         color = when (necessityLevel) {
-                                            NecessityLevel.NECESSARY -> Color.Green
-                                            NecessityLevel.MEDIUM -> Color.Yellow
-                                            NecessityLevel.NOT_NEEDED -> Color.Red
+                                            NecessityLevel.NECESSARY -> Color(33, 117, 30)
+                                            NecessityLevel.MEDIUM -> Color(212, 130, 49)
+                                            NecessityLevel.NOT_NEEDED -> Color(179, 52, 52)
                                         },
                                         shape = CircleShape
                                     )
