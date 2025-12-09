@@ -28,6 +28,7 @@ import com.example.financeapplication.screens.EssentialsScreen
 import com.example.financeapplication.screens.WishlistScreen
 import com.example.financeapplication.screens.AddSpendingScreen
 import com.example.financeapplication.screens.AddIncomeScreen
+import com.example.financeapplication.screens.SavingsScreen
 
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
                                             "Wishlist" -> navController.navigate("wishlist_screen")
                                             "Add spending" -> navController.navigate("add_spending_screen")
                                             "Add income" -> navController.navigate("add_income_screen")
+                                            "Savings" -> navController.navigate("savings_screen")
                                         }
                                     }
 
@@ -91,6 +93,9 @@ class MainActivity : ComponentActivity() {
                             composable("add_income_screen") {
                                 AddIncomeScreen(onBackPress = { navController.popBackStack() })
                             }
+                            composable("savings_screen") {
+                                SavingsScreen(onBackPress = { navController.popBackStack() })
+                            }
                         }
                     }
                 }
@@ -105,7 +110,7 @@ fun MainScreen(modifier: Modifier = Modifier, onTileClick: (String) -> Unit) {
         "Wishlist",
         "Add spending",
         "Add income",
-        "Transfer to savings",
+        "Savings",
         "Overview",
         "Spending history",
         "Income history"

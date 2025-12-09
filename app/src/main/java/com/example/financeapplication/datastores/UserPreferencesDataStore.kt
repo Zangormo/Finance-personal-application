@@ -14,6 +14,7 @@ object UserPreferencesDataStore {
 
     private val IS_FIRST_RUN_KEY = booleanPreferencesKey("is_first_run")
     private val OVERALL_BALANCE_KEY = floatPreferencesKey("overall_balance")
+    private val SAVINGS_BALANCE_KEY = floatPreferencesKey("savings_balance")
 
     fun isFirstRun(context: Context): Flow<Boolean> {
         return context.dataStoreUserPreferences.data.map { prefs ->
@@ -43,6 +44,19 @@ object UserPreferencesDataStore {
         context.dataStoreUserPreferences.edit { prefs ->
             val current = prefs[OVERALL_BALANCE_KEY] ?: 0.0f
             prefs[OVERALL_BALANCE_KEY] = current + amountChange
+        }
+    }
+
+    fun getSavingsBalance(context: Context): Flow<Float> {
+        return context.dataStoreUserPreferences.data.map { prefs ->
+            prefs[SAVINGS_BALANCE_KEY] ?: 0.0f
+        }
+    }
+
+    suspend fun updateSavingsBalance(context: Context, amountChange: Float) {
+        context.dataStoreUserPreferences.edit { prefs ->
+            val current = prefs[SAVINGS_BALANCE_KEY] ?: 0.0f
+            prefs[SAVINGS_BALANCE_KEY] = current + amountChange
         }
     }
 }
