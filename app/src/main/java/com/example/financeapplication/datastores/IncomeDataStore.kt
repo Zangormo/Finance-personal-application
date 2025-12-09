@@ -26,7 +26,7 @@ object IncomeDataStore {
             val json = prefs[INCOMES_KEY] ?: return@map emptyList()
             try {
                 gson.fromJson(json, Array<IncomeRecord>::class.java).toList()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -41,7 +41,7 @@ object IncomeDataStore {
                 } else {
                     mutableListOf()
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 mutableListOf()
             }
             
@@ -52,12 +52,6 @@ object IncomeDataStore {
             ))
             
             prefs[INCOMES_KEY] = gson.toJson(current)
-        }
-    }
-
-    suspend fun clearAllIncomes(context: Context) {
-        context.dataStoreIncome.edit { prefs ->
-            prefs.remove(INCOMES_KEY)
         }
     }
 }

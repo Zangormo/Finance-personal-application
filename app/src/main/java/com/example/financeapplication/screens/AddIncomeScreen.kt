@@ -1,5 +1,6 @@
 package com.example.financeapplication.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,6 +20,7 @@ import com.example.financeapplication.ui.theme.appColors
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun AddIncomeScreen(onBackPress: () -> Unit = {}) {
     val context = LocalContext.current

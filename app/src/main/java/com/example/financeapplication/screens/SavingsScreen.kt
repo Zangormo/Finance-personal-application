@@ -1,5 +1,6 @@
 package com.example.financeapplication.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +19,7 @@ import com.example.financeapplication.ui.theme.appColors
 import kotlinx.coroutines.launch
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun SavingsScreen(onBackPress: () -> Unit = {}) {
     val context = LocalContext.current
@@ -30,7 +32,7 @@ fun SavingsScreen(onBackPress: () -> Unit = {}) {
     val savingsFlow = UserPreferencesDataStore.getSavingsBalance(context)
     val currentSavings by savingsFlow.collectAsState(initial = 0f)
 
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Save", "Withdraw")
 
     Column(
@@ -149,7 +151,6 @@ fun SavingsScreen(onBackPress: () -> Unit = {}) {
         when (selectedTab) {
             0 -> SaveTab(
                 currentBalance = currentBalance,
-                colors = Color.Transparent,
                 onSave = { amount ->
                     scope.launch {
                         UserPreferencesDataStore.updateBalance(context, -amount)
@@ -159,7 +160,6 @@ fun SavingsScreen(onBackPress: () -> Unit = {}) {
             )
             1 -> WithdrawTab(
                 currentSavings = currentSavings,
-                colors = Color.Transparent,
                 onWithdraw = { amount ->
                     scope.launch {
                         UserPreferencesDataStore.updateSavingsBalance(context, -amount)
@@ -174,12 +174,12 @@ fun SavingsScreen(onBackPress: () -> Unit = {}) {
 @Composable
 fun SaveTab(
     currentBalance: Float,
-    colors: androidx.compose.ui.graphics.Color,
     onSave: (Float) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    val colors = appColors()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -194,6 +194,15 @@ fun SaveTab(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = colors.primaryText,
+                        unfocusedTextColor = colors.primaryText,
+                        cursorColor = colors.primaryText,
+                        focusedBorderColor = colors.border,
+                        unfocusedBorderColor = colors.border,
+                        focusedPlaceholderColor = colors.placeholderText,
+                        unfocusedPlaceholderColor = colors.placeholderText
+                    ),
                     value = amountText,
                     onValueChange = { newValue ->
                         val filtered = if (newValue.isEmpty()) {
@@ -262,12 +271,12 @@ fun SaveTab(
 @Composable
 fun WithdrawTab(
     currentSavings: Float,
-    colors: androidx.compose.ui.graphics.Color,
     onWithdraw: (Float) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    val colors = appColors()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -283,6 +292,15 @@ fun WithdrawTab(
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = amountText,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = colors.primaryText,
+                        unfocusedTextColor = colors.primaryText,
+                        cursorColor = colors.primaryText,
+                        focusedBorderColor = colors.border,
+                        unfocusedBorderColor = colors.border,
+                        focusedPlaceholderColor = colors.placeholderText,
+                        unfocusedPlaceholderColor = colors.placeholderText
+                    ),
                     onValueChange = { newValue ->
                         val filtered = if (newValue.isEmpty()) {
                             ""

@@ -1,5 +1,6 @@
 package com.example.financeapplication.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -94,6 +95,7 @@ fun SpendingHistoryScreen(onBackPress: () -> Unit = {}) {
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun SpendingHistoryItem(
     spending: SpendingRecord,
@@ -140,6 +142,7 @@ fun SpendingHistoryItem(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun SpendingDetailDialog(
     spending: SpendingRecord,

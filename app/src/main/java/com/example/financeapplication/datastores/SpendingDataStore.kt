@@ -28,7 +28,7 @@ object SpendingDataStore {
             val json = prefs[SPENDINGS_KEY] ?: return@map emptyList()
             try {
                 gson.fromJson(json, Array<SpendingRecord>::class.java).toList()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 emptyList()
             }
         }
@@ -43,7 +43,7 @@ object SpendingDataStore {
                 } else {
                     mutableListOf()
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 mutableListOf()
             }
             
@@ -55,12 +55,6 @@ object SpendingDataStore {
             ))
             
             prefs[SPENDINGS_KEY] = gson.toJson(current)
-        }
-    }
-
-    suspend fun clearAllSpendings(context: Context) {
-        context.dataStoreSpending.edit { prefs ->
-            prefs.remove(SPENDINGS_KEY)
         }
     }
 }

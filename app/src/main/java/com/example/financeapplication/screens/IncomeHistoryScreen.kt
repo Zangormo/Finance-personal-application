@@ -1,6 +1,6 @@
 package com.example.financeapplication.screens
 
-import android.R
+import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -95,6 +95,7 @@ fun IncomeHistoryScreen(onBackPress: () -> Unit = {}) {
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun IncomeHistoryItem(
     income: IncomeRecord,
@@ -139,6 +140,7 @@ fun IncomeHistoryItem(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun IncomeDetailDialog(
     income: IncomeRecord,

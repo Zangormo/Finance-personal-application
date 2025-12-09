@@ -1,5 +1,6 @@
 package com.example.financeapplication.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,10 +26,10 @@ import com.example.financeapplication.datastores.UserPreferencesDataStore
 import com.example.financeapplication.ui.theme.appColors
 import java.util.Calendar
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun OverviewScreen(onBackPress: () -> Unit = {}) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val colors = appColors()
 
     val balanceFlow = UserPreferencesDataStore.getOverallBalance(context)
@@ -45,10 +46,8 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
 
     // Period selection states
     var selectedPeriod by remember { mutableStateOf(PeriodType.MONTH) }
-    var selectedYear by remember { mutableStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
-    var selectedMonth by remember { mutableStateOf(Calendar.getInstance().get(Calendar.MONTH)) }
-    var showYearPicker by remember { mutableStateOf(false) }
-    var showMonthPicker by remember { mutableStateOf(false) }
+    var selectedYear by remember { mutableIntStateOf(Calendar.getInstance().get(Calendar.YEAR)) }
+    var selectedMonth by remember { mutableIntStateOf(Calendar.getInstance().get(Calendar.MONTH)) }
 
     Column(
         modifier = Modifier
@@ -356,7 +355,11 @@ fun PeriodButton(
             contentColor = if (isSelected) colors.primaryText else colors.primaryText
         ),
         shape = RoundedCornerShape(8.dp),
-        border = if (!isSelected) androidx.compose.material3.ButtonDefaults.outlinedButtonBorder else null
+        border = if (!isSelected) {
+            ButtonDefaults.outlinedButtonBorder(enabled = true)
+        } else {
+            null
+        }
     ) {
         Text(text, style = MaterialTheme.typography.labelSmall)
     }
@@ -543,12 +546,11 @@ fun PieChart(
     val mediumPercentage = mediumAmount / total
     val notNeededPercentage = notNeededAmount / total
 
-    // Пробел между секциями в градусах
     val gapAngle = 3f
 
     Canvas(modifier = modifier) {
         val outerRadius = size.minDimension / 2
-        val innerRadius = outerRadius * 0.6f // 60% от внешнего радиуса для создания "дырки"
+        val innerRadius = outerRadius * 0.6f
         val centerX = size.width / 2
         val centerY = size.height / 2
 
@@ -609,6 +611,7 @@ fun Canvas(modifier: Modifier, onDraw: androidx.compose.ui.graphics.drawscope.Dr
     androidx.compose.foundation.Canvas(modifier = modifier, onDraw = onDraw)
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun LegendItem(
     label: String,
@@ -652,7 +655,6 @@ fun calculateSpendingByNecessity(
     year: Int,
     month: Int
 ): Triple<Float, Float, Float> {
-    val now = Calendar.getInstance()
     val startOfPeriod = Calendar.getInstance()
 
     when (periodType) {

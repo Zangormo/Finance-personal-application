@@ -1,5 +1,6 @@
 package com.example.financeapplication.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -30,6 +31,7 @@ import com.example.financeapplication.ui.theme.appColors
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
     val context = LocalContext.current
