@@ -221,7 +221,7 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                         notNeededAmount = notNeededTotal,
                         modifier = Modifier
                             .size(200.dp)
-                            .padding(bottom = 16.dp)
+                            .padding(vertical = 16.dp)
                     )
 
                     // Legend
@@ -230,19 +230,19 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         LegendItem(
-                            label = "Necessary",
+                            label = "",
                             amount = necessaryTotal,
                             color = Color.Green,
                             total = grandTotal
                         )
                         LegendItem(
-                            label = "Medium",
+                            label = "",
                             amount = mediumTotal,
                             color = Color.Yellow,
                             total = grandTotal
                         )
                         LegendItem(
-                            label = "Not Needed",
+                            label = "",
                             amount = notNeededTotal,
                             color = Color.Red,
                             total = grandTotal
@@ -477,13 +477,13 @@ fun YearSelector(
         }
     }
 }
-
 @Composable
 fun PieChart(
     necessaryAmount: Float,
     mediumAmount: Float,
     notNeededAmount: Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    chartSize: androidx.compose.ui.unit.Dp = 160.dp
 ) {
     val total = necessaryAmount + mediumAmount + notNeededAmount
     if (total == 0f) return
@@ -492,40 +492,64 @@ fun PieChart(
     val mediumPercentage = mediumAmount / total
     val notNeededPercentage = notNeededAmount / total
 
-    Canvas(modifier = modifier) {
-        val radius = size.minDimension / 2
+    // Пробел между секциями в градусах
+    val gapAngle = 3f
+
+    Canvas(modifier = modifier.size(chartSize)) {
+        val outerRadius = size.minDimension / 2
+        val innerRadius = outerRadius * 0.6f // 60% от внешнего радиуса для создания "дырки"
         val centerX = size.width / 2
         val centerY = size.height / 2
 
+        val strokeWidth = outerRadius - innerRadius
+
         // Draw Necessary (Green)
-        drawArc(
-            color = Color.Green,
-            startAngle = 0f,
-            sweepAngle = necessaryPercentage * 360f,
-            useCenter = true,
-            topLeft = androidx.compose.ui.geometry.Offset(centerX - radius, centerY - radius),
-            size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-        )
+        if (necessaryAmount > 0) {
+            drawArc(
+                color = Color.Green,
+                startAngle = -90f,
+                sweepAngle = necessaryPercentage * 360f - gapAngle,
+                useCenter = false,
+                topLeft = androidx.compose.ui.geometry.Offset(
+                    centerX - outerRadius,
+                    centerY - outerRadius
+                ),
+                size = androidx.compose.ui.geometry.Size(outerRadius * 2, outerRadius * 2),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+            )
+        }
 
         // Draw Medium (Yellow)
-        drawArc(
-            color = Color.Yellow,
-            startAngle = necessaryPercentage * 360f,
-            sweepAngle = mediumPercentage * 360f,
-            useCenter = true,
-            topLeft = androidx.compose.ui.geometry.Offset(centerX - radius, centerY - radius),
-            size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-        )
+        if (mediumAmount > 0) {
+            drawArc(
+                color = Color.Yellow,
+                startAngle = -90f + necessaryPercentage * 360f,
+                sweepAngle = mediumPercentage * 360f - gapAngle,
+                useCenter = false,
+                topLeft = androidx.compose.ui.geometry.Offset(
+                    centerX - outerRadius,
+                    centerY - outerRadius
+                ),
+                size = androidx.compose.ui.geometry.Size(outerRadius * 2, outerRadius * 2),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+            )
+        }
 
         // Draw Not Needed (Red)
-        drawArc(
-            color = Color.Red,
-            startAngle = (necessaryPercentage + mediumPercentage) * 360f,
-            sweepAngle = notNeededPercentage * 360f,
-            useCenter = true,
-            topLeft = androidx.compose.ui.geometry.Offset(centerX - radius, centerY - radius),
-            size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-        )
+        if (notNeededAmount > 0) {
+            drawArc(
+                color = Color.Red,
+                startAngle = -90f + (necessaryPercentage + mediumPercentage) * 360f,
+                sweepAngle = notNeededPercentage * 360f - gapAngle,
+                useCenter = false,
+                topLeft = androidx.compose.ui.geometry.Offset(
+                    centerX - outerRadius,
+                    centerY - outerRadius
+                ),
+                size = androidx.compose.ui.geometry.Size(outerRadius * 2, outerRadius * 2),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
+            )
+        }
     }
 }
 
