@@ -3,6 +3,8 @@ package com.example.financeapplication.screens
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -11,8 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.text.KeyboardOptions
 import com.example.financeapplication.datastores.IncomeDataStore
 import com.example.financeapplication.datastores.UserPreferencesDataStore
@@ -35,10 +40,16 @@ fun AddIncomeScreen(onBackPress: () -> Unit = {}) {
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+    val imeHeight = WindowInsets.ime.getBottom(density)
+    val keyboardOffset = with(density) { (imeHeight * 0.3f).toDp() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .padding(bottom = keyboardOffset)
     ) {
         // Header with back button
         Row(
@@ -89,7 +100,12 @@ fun AddIncomeScreen(onBackPress: () -> Unit = {}) {
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+        ) {
+            Spacer(modifier = Modifier.height(1.dp))
 
         // Amount input
         Card(
@@ -211,6 +227,7 @@ fun AddIncomeScreen(onBackPress: () -> Unit = {}) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Add Income")
+        }
         }
     }
 }
