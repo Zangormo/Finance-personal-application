@@ -34,10 +34,14 @@ import com.example.financeapplication.screens.SpendingHistoryScreen
 import com.example.financeapplication.screens.OverviewScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.example.financeapplication.datastores.UserPreferencesDataStore
 import com.example.financeapplication.screens.WelcomeScreen
+import com.example.financeapplication.screens.SplashScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -50,12 +54,14 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()
                 val isFirstRunState by UserPreferencesDataStore.isFirstRun(context).collectAsState(initial = null)
+                var startDestination by remember { mutableStateOf<String?>(null) }
 
-                if (isFirstRunState != null) {
+                if (isFirstRunState != null && startDestination != null) {
+                    // Основной контент приложения после splash screen
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         NavHost(
                             navController = navController,
-                            startDestination = if (isFirstRunState == true) "welcome_screen" else "main_screen",
+                            startDestination = startDestination!!,
                             modifier = Modifier.padding(innerPadding)
                         ) {
                             composable("welcome_screen") {
@@ -112,11 +118,17 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                } else {
+                    // Splash Screen
+                    SplashScreen(onScreenDetermined = { destination ->
+                        startDestination = destination
+                    })
                 }
             }
         }
     }
 }
+
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, onTileClick: (String) -> Unit) {
     val items = listOf(
