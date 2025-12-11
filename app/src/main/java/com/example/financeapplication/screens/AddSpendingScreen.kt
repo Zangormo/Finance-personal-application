@@ -46,22 +46,34 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
     val essentialsFlow = EssentialsDataStore.getEssentials(context)
     val essentials by essentialsFlow.collectAsState(initial = emptyList())
 
-    val wishlistFlow = WishlistDatastore.getWishlist(context)
-    val wishedItems by wishlistFlow.collectAsState(initial = emptyList())
+    val wishlistItemsFlow = WishlistDatastore.getWishlistItems(context)
+    val wishlistItems by wishlistItemsFlow.collectAsState(initial = emptyList())
 
     val balanceFlow = UserPreferencesDataStore.getOverallBalance(context)
     val currentBalance by balanceFlow.collectAsState(initial = 0f)
+
+    val savingsFlow = UserPreferencesDataStore.getSavingsBalance(context)
+    val savingsBalance by savingsFlow.collectAsState(initial = 0f)
 
     var selectedItems by remember { mutableStateOf<Set<String>>(emptySet()) }
     var amountText by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var necessityLevel by remember { mutableStateOf(NecessityLevel.NECESSARY) }
+    var showWithdrawDialog by remember { mutableStateOf(false) }
+    var withdrawAmount by remember { mutableStateOf("") }
+    var withdrawError by remember { mutableStateOf("") }
+    var insufficientFundsMessage by remember { mutableStateOf("") }
 
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
     val imeHeight = WindowInsets.ime.getBottom(density)
     val keyboardOffset = with(density) { (imeHeight * 0.3f).toDp() }
+
+    // Calculate total price of selected items with prices
+    val totalSelectedPrice = selectedItems.sumOf { itemName ->
+        wishlistItems.find { it.name == itemName }?.price?.toDouble() ?: 0.0
+    }.toFloat()
 
     Column(
         modifier = Modifier
@@ -161,7 +173,7 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
             }
 
             // Wishlisted Section
-            if (wishedItems.isNotEmpty()) {
+            if (wishlistItems.isNotEmpty()) {
                 item {
                     Text(
                         text = "Wishlisted",
@@ -170,15 +182,16 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
-                items(wishedItems) { item ->
+                items(wishlistItems) { item ->
                     ItemCheckBox(
-                        item = item,
-                        isSelected = item in selectedItems,
+                        item = item.name,
+                        price = if (item.price > 0f) "$${String.format("%.2f", item.price)}" else null,
+                        isSelected = item.name in selectedItems,
                         onSelectionChange = { isSelected ->
                             selectedItems = if (isSelected) {
-                                selectedItems + item
+                                selectedItems + item.name
                             } else {
-                                selectedItems - item
+                                selectedItems - item.name
                             }
                         },
                         colors = colors
@@ -310,36 +323,51 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
                             isError = true
                             errorMessage = "Amount must be greater than 0"
                         }
-                        amount > currentBalance -> {
-                            isError = true
-                            errorMessage = "Amount exceeds your current balance"
-                        }
                         else -> {
                             val roundedAmount = (amount * 100).roundToInt() / 100f
-                            scope.launch {
-                                // Add spending record
-                                SpendingDataStore.addSpending(
-                                    context,
-                                    roundedAmount,
-                                    selectedItems.toList(),
-                                    necessityLevel
-                                )
-
-                                // Update balance (subtract spent amount)
-                                UserPreferencesDataStore.updateBalance(context, -roundedAmount)
-
-                                // Remove selected items from essentials and wishlist
-                                selectedItems.forEach { item ->
-                                    if (essentials.contains(item)) {
-                                        EssentialsDataStore.removeEssential(context, item)
-                                    }
-                                    if (wishedItems.contains(item)) {
-                                        WishlistDatastore.removeWishlistItem(context, item)
-                                    }
+                            
+                            // Check if we have enough balance for wishlist items with prices
+                            if (totalSelectedPrice > currentBalance) {
+                                val deficit = totalSelectedPrice - currentBalance
+                                // Check if savings can cover the deficit
+                                if (savingsBalance >= deficit) {
+                                    // Show dialog to withdraw from savings
+                                    insufficientFundsMessage = ""
+                                    withdrawAmount = String.format("%.2f", deficit)
+                                    showWithdrawDialog = true
+                                } else {
+                                    // Not enough even with savings
+                                    val totalAvailable = currentBalance + savingsBalance
+                                    insufficientFundsMessage = "Insufficient funds for selected items! You need $${String.format("%.2f", totalSelectedPrice)} but have only $${String.format("%.2f", totalAvailable)} available (balance: $${String.format("%.2f", currentBalance)} + savings: $${String.format("%.2f", savingsBalance)})"
                                 }
+                            } else {
+                                // Enough balance, proceed with spending
+                                scope.launch {
+                                    // Add spending record
+                                    SpendingDataStore.addSpending(
+                                        context,
+                                        roundedAmount,
+                                        selectedItems.toList(),
+                                        necessityLevel
+                                    )
 
-                                // Navigate back
-                                onBackPress()
+                                    // Update balance (subtract spent amount + wishlist prices)
+                                    UserPreferencesDataStore.updateBalance(context, -(roundedAmount + totalSelectedPrice))
+
+                                    // Remove selected items from essentials and wishlist
+                                    selectedItems.forEach { item ->
+                                        if (essentials.contains(item)) {
+                                            EssentialsDataStore.removeEssential(context, item)
+                                        }
+                                        val wishlistItem = wishlistItems.find { it.name == item }
+                                        if (wishlistItem != null) {
+                                            WishlistDatastore.removeWishlistItem(context, item)
+                                        }
+                                    }
+
+                                    // Navigate back
+                                    onBackPress()
+                                }
                             }
                         }
                     }
@@ -352,13 +380,200 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
             ) {
                 Text("Add Spending")
             }
+
+            // Show insufficient funds message
+            if (insufficientFundsMessage.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF4A1E1E)
+                    )
+                ) {
+                    Text(
+                        text = insufficientFundsMessage,
+                        color = Color(0xFFFF6B6B),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
         }
+    }
+
+    // Withdraw from Savings Dialog
+    if (showWithdrawDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showWithdrawDialog = false
+                withdrawAmount = ""
+                withdrawError = ""
+            },
+            title = {
+                Text(
+                    text = "Withdraw from Savings",
+                    color = colors.primaryText
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Selected wishlist items cost $${String.format("%.2f", totalSelectedPrice)} but you only have $${String.format("%.2f", currentBalance)} in balance.",
+                        color = colors.primaryText,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "You need at least $${String.format("%.2f", totalSelectedPrice - currentBalance)} from savings.",
+                        color = colors.primaryText,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    Text(
+                        text = "Available savings: $${String.format("%.2f", savingsBalance)}",
+                        color = colors.placeholderText,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    OutlinedTextField(
+                        value = withdrawAmount,
+                        onValueChange = { newValue ->
+                            val filtered = if (newValue.isEmpty()) {
+                                ""
+                            } else {
+                                val parts = newValue.replace(',', '.').split('.')
+                                when {
+                                    parts.size > 2 -> withdrawAmount
+                                    parts.size == 2 && parts[1].length > 2 -> withdrawAmount
+                                    else -> newValue
+                                }
+                            }
+                            withdrawAmount = filtered
+                            withdrawError = ""
+                        },
+                        label = { Text("Amount to withdraw", color = colors.primaryText) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(8.dp),
+                        isError = withdrawError.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = colors.primaryText,
+                            unfocusedTextColor = colors.primaryText,
+                            cursorColor = colors.primaryText,
+                            focusedBorderColor = colors.border,
+                            unfocusedBorderColor = colors.border,
+                            focusedLabelColor = colors.primaryText,
+                            unfocusedLabelColor = colors.primaryText
+                        )
+                    )
+                    if (withdrawError.isNotEmpty()) {
+                        Text(
+                            text = withdrawError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val sanitizedWithdraw = withdrawAmount.replace(',', '.')
+                        val withdrawVal = sanitizedWithdraw.toFloatOrNull()
+
+                        when {
+                            withdrawVal == null -> {
+                                withdrawError = "Please enter a valid amount"
+                            }
+                            withdrawVal <= 0 -> {
+                                withdrawError = "Amount must be greater than 0"
+                            }
+                            withdrawVal > savingsBalance -> {
+                                withdrawError = "Amount exceeds available savings"
+                            }
+                            else -> {
+                                val roundedAmount = (amountText.replace(',', '.').toFloatOrNull() ?: 0f)
+                                val roundedWithdraw = (withdrawVal * 100).roundToInt() / 100f
+                                val totalCost = roundedAmount + totalSelectedPrice
+                                val balanceAfterWithdraw = currentBalance + roundedWithdraw
+                                
+                                // Check if total cost exceeds new balance after withdrawal
+                                if (totalCost > balanceAfterWithdraw) {
+                                    val stillNeeded = totalCost - balanceAfterWithdraw
+                                    withdrawError = "Not enough funds! You need additional $${String.format("%.2f", stillNeeded)} even after withdrawing $${String.format("%.2f", roundedWithdraw)}"
+                                } else {
+                                    // Process the spending with withdrawn amount
+                                    scope.launch {
+                                        // Add spending record
+                                        SpendingDataStore.addSpending(
+                                            context,
+                                            roundedAmount,
+                                            selectedItems.toList(),
+                                            necessityLevel
+                                        )
+
+                                        // Withdraw from savings first
+                                        UserPreferencesDataStore.updateSavingsBalance(context, -roundedWithdraw)
+                                        UserPreferencesDataStore.updateBalance(context, roundedWithdraw)
+                                        
+                                        // Then subtract total cost from balance
+                                        UserPreferencesDataStore.updateBalance(context, -totalCost)
+
+                                        // Remove selected items from essentials and wishlist
+                                        selectedItems.forEach { item ->
+                                            if (essentials.contains(item)) {
+                                                EssentialsDataStore.removeEssential(context, item)
+                                            }
+                                            val wishlistItem = wishlistItems.find { it.name == item }
+                                            if (wishlistItem != null) {
+                                                WishlistDatastore.removeWishlistItem(context, item)
+                                            }
+                                        }
+
+                                        showWithdrawDialog = false
+                                        // Navigate back
+                                        onBackPress()
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = colors.primaryText
+                    )
+                ) {
+                    Text("Withdraw")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showWithdrawDialog = false
+                        withdrawAmount = ""
+                        withdrawError = ""
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = colors.primaryText
+                    )
+                ) {
+                    Text("Cancel")
+                }
+            },
+            textContentColor = colors.primaryText
+        )
     }
 }
 
 @Composable
 fun ItemCheckBox(
     item: String,
+    price: String? = null,
     isSelected: Boolean,
     onSelectionChange: (Boolean) -> Unit,
     colors: com.example.financeapplication.ui.theme.AppColors
@@ -394,10 +609,21 @@ fun ItemCheckBox(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        Text(
-            text = item,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.primaryText
-        )
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = item,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.primaryText
+            )
+            if (price != null) {
+                Text(
+                    text = price,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.placeholderText
+                )
+            }
+        }
     }
 }

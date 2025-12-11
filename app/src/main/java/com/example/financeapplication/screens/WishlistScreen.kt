@@ -1,11 +1,13 @@
 package com.example.financeapplication.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -20,12 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.launch
 import com.example.financeapplication.ui.theme.appColors
 import com.example.financeapplication.datastores.WishlistDatastore
 import androidx.compose.ui.platform.LocalContext
 
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun WishlistScreen(onBackPress: () -> Unit = {}) {
     val context = LocalContext.current
@@ -33,8 +37,9 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
     val colors = appColors()
 
     var inputText by remember { mutableStateOf("") }
-    val wishlistFlow = WishlistDatastore.getWishlist(context)
-    val wishedItems by wishlistFlow.collectAsState(initial = emptyList())
+    var inputPrice by remember { mutableStateOf("") }
+    val wishlistItemsFlow = WishlistDatastore.getWishlistItems(context)
+    val wishlistItems by wishlistItemsFlow.collectAsState(initial = emptyList())
 
     Column(
         modifier = Modifier
@@ -71,15 +76,14 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Add new wishlist item...", color = colors.primaryText) },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Item name...", color = colors.primaryText) },
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = colors.primaryText,
@@ -91,20 +95,61 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
                         unfocusedPlaceholderColor = colors.placeholderText
                     )
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                FloatingActionButton(
-                    onClick = {
-                        if (inputText.isNotBlank()) {
-                            scope.launch {
-                                WishlistDatastore.addWishlistItem(context, inputText.trim())
-                                inputText = ""
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                OutlinedTextField(
+                    value = inputPrice,
+                    onValueChange = { newValue ->
+                        val filtered = if (newValue.isEmpty()) {
+                            ""
+                        } else {
+                            val parts = newValue.replace(',', '.').split('.')
+                            when {
+                                parts.size > 2 -> inputPrice
+                                parts.size == 2 && parts[1].length > 2 -> inputPrice
+                                else -> newValue
                             }
                         }
+                        inputPrice = filtered
                     },
-                    containerColor = Color.Transparent,
-                    elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Price (optional)", color = colors.primaryText) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = colors.primaryText,
+                        unfocusedTextColor = colors.primaryText,
+                        cursorColor = colors.primaryText,
+                        focusedBorderColor = colors.border,
+                        unfocusedBorderColor = colors.border,
+                        focusedPlaceholderColor = colors.placeholderText,
+                        unfocusedPlaceholderColor = colors.placeholderText
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add", tint = colors.primaryText)
+                    FloatingActionButton(
+                        onClick = {
+                            if (inputText.isNotBlank()) {
+                                val price = inputPrice.replace(',', '.').toFloatOrNull() ?: 0f
+                                scope.launch {
+                                    WishlistDatastore.addWishlistItem(context, inputText.trim(), price)
+                                    inputText = ""
+                                    inputPrice = ""
+                                }
+                            }
+                        },
+                        containerColor = Color.Transparent,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add", tint = colors.primaryText)
+                    }
                 }
             }
         }
@@ -112,7 +157,7 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Items List
-        if (wishedItems.isEmpty()) {
+        if (wishlistItems.isEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -136,14 +181,16 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
-                    items = wishedItems,
-                    key = { it }
+                    items = wishlistItems,
+                    key = { it.name }
                 ) { item ->
                     var editMode by remember { mutableStateOf(false) }
                     var editText by remember { mutableStateOf("") }
+                    var editPrice by remember { mutableStateOf("") }
 
                     LaunchedEffect(item) {
-                        editText = item
+                        editText = item.name
+                        editPrice = if (item.price > 0f) item.price.toString() else ""
                     }
 
                     Card(
@@ -153,20 +200,17 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
                         shape = RoundedCornerShape(12.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(80.dp)
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(16.dp)
                         ) {
                             if (editMode) {
                                 BasicTextField(
                                     value = editText,
                                     onValueChange = { editText = it },
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .height(68.dp)
+                                        .fillMaxWidth()
                                         .border(1.dp, colors.border, RoundedCornerShape(8.dp))
                                         .padding(horizontal = 12.dp, vertical = 14.dp),
                                     singleLine = true,
@@ -176,50 +220,118 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
                                     cursorBrush = SolidColor(colors.primaryText)
                                 )
 
-                                Spacer(modifier = Modifier.width(8.dp))
-                                IconButton(
-                                    onClick = {
-                                        scope.launch {
-                                            WishlistDatastore.updateWishlistItem(context, item, editText)
-                                            editMode = false
-                                        }
-                                    },
-                                    colors = IconButtonDefaults.iconButtonColors(
-                                        contentColor = colors.primaryText
-                                    )
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, colors.border, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 14.dp)
                                 ) {
-                                    Icon(Icons.Default.Check, contentDescription = "Save")
+                                    if (editPrice.isEmpty()) {
+                                        Text(
+                                            text = "Price (optional)",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = colors.placeholderText
+                                        )
+                                    }
+                                    BasicTextField(
+                                        value = editPrice,
+                                        onValueChange = { newValue ->
+                                            val filtered = if (newValue.isEmpty()) {
+                                                ""
+                                            } else {
+                                                val parts = newValue.replace(',', '.').split('.')
+                                                when {
+                                                    parts.size > 2 -> editPrice
+                                                    parts.size == 2 && parts[1].length > 2 -> editPrice
+                                                    else -> newValue
+                                                }
+                                            }
+                                            editPrice = filtered
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                            color = colors.primaryText
+                                        ),
+                                        cursorBrush = SolidColor(colors.primaryText)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    IconButton(
+                                        onClick = {
+                                            scope.launch {
+                                                val price = editPrice.replace(',', '.').toFloatOrNull() ?: 0f
+                                                WishlistDatastore.updateWishlistItem(context, item.name, editText, price)
+                                                editMode = false
+                                            }
+                                        },
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            contentColor = colors.primaryText
+                                        )
+                                    ) {
+                                        Icon(Icons.Default.Check, contentDescription = "Save")
+                                    }
                                 }
                             } else {
-                                Text(
-                                    text = item,
+                                Row(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .padding(horizontal = 12.dp, vertical = 14.dp),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = colors.primaryText
-                                )
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = item.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = colors.primaryText
+                                        )
+                                        if (item.price > 0f) {
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "$${String.format("%.2f", item.price)}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = colors.placeholderText
+                                            )
+                                        }
+                                    }
 
-                                IconButton(
-                                    onClick = {
-                                        editText = item
-                                        editMode = true
-                                    },
-                                    colors = IconButtonDefaults.iconButtonColors(
-                                        contentColor = colors.primaryText
-                                    )
-                                ) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                }
-                                IconButton(
-                                    onClick = {
-                                        scope.launch { WishlistDatastore.removeWishlistItem(context, item) }
-                                    },
-                                    colors = IconButtonDefaults.iconButtonColors(
-                                        contentColor = colors.primaryText
-                                    )
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                    Row(
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                editText = item.name
+                                                editPrice = if (item.price > 0f) item.price.toString() else ""
+                                                editMode = true
+                                            },
+                                            colors = IconButtonDefaults.iconButtonColors(
+                                                contentColor = colors.primaryText
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                scope.launch { WishlistDatastore.removeWishlistItem(context, item.name) }
+                                            },
+                                            colors = IconButtonDefaults.iconButtonColors(
+                                                contentColor = colors.primaryText
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                        }
+                                    }
                                 }
                             }
                         }
