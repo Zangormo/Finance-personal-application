@@ -306,7 +306,14 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
         }
 
         // Total income
-        val totalIncome = incomes.sumOf { it.amount.toDouble() }.toFloat()
+        // Total income for selected period
+        val totalIncome = calculateIncomeForPeriod(
+            incomes,
+            selectedPeriod,
+            selectedYear,
+            selectedMonth
+        )
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -656,27 +663,41 @@ fun calculateSpendingByNecessity(
     month: Int
 ): Triple<Float, Float, Float> {
     val startOfPeriod = Calendar.getInstance()
+    val endOfPeriod = Calendar.getInstance()
 
     when (periodType) {
         PeriodType.WEEK -> {
+            // For week, use last 7 days ending today
             startOfPeriod.add(Calendar.DAY_OF_YEAR, -6)
             startOfPeriod.set(Calendar.HOUR_OF_DAY, 0)
             startOfPeriod.set(Calendar.MINUTE, 0)
             startOfPeriod.set(Calendar.SECOND, 0)
             startOfPeriod.set(Calendar.MILLISECOND, 0)
+
+            endOfPeriod.set(Calendar.HOUR_OF_DAY, 23)
+            endOfPeriod.set(Calendar.MINUTE, 59)
+            endOfPeriod.set(Calendar.SECOND, 59)
+            endOfPeriod.set(Calendar.MILLISECOND, 999)
         }
         PeriodType.MONTH -> {
+            // Set to start of selected month
             startOfPeriod.set(year, month, 1, 0, 0, 0)
             startOfPeriod.set(Calendar.MILLISECOND, 0)
+
+            // Set to end of selected month
+            endOfPeriod.set(year, month, 1, 23, 59, 59)
+            endOfPeriod.set(Calendar.MILLISECOND, 999)
+            endOfPeriod.set(Calendar.DAY_OF_MONTH, endOfPeriod.getActualMaximum(Calendar.DAY_OF_MONTH))
         }
         PeriodType.YEAR -> {
+            // Set to start of selected year
             startOfPeriod.set(year, 0, 1, 0, 0, 0)
             startOfPeriod.set(Calendar.MILLISECOND, 0)
-        }
-    }
 
-    val endOfPeriod = Calendar.getInstance().apply {
-        timeInMillis = System.currentTimeMillis()
+            // Set to end of selected year
+            endOfPeriod.set(year, 11, 31, 23, 59, 59)
+            endOfPeriod.set(Calendar.MILLISECOND, 999)
+        }
     }
 
     var necessaryTotal = 0f
@@ -700,4 +721,65 @@ fun calculateSpendingByNecessity(
     }
 
     return Triple(necessaryTotal, mediumTotal, notNeededTotal)
+}
+
+fun calculateIncomeForPeriod(
+    incomes: List<com.example.financeapplication.datastores.IncomeRecord>,
+    periodType: PeriodType,
+    year: Int,
+    month: Int
+): Float {
+    val startOfPeriod = Calendar.getInstance()
+    val endOfPeriod = Calendar.getInstance()
+
+    when (periodType) {
+        PeriodType.WEEK -> {
+            // For week, use last 7 days ending today
+            startOfPeriod.add(Calendar.DAY_OF_YEAR, -6)
+            startOfPeriod.set(Calendar.HOUR_OF_DAY, 0)
+            startOfPeriod.set(Calendar.MINUTE, 0)
+            startOfPeriod.set(Calendar.SECOND, 0)
+            startOfPeriod.set(Calendar.MILLISECOND, 0)
+
+            endOfPeriod.set(Calendar.HOUR_OF_DAY, 23)
+            endOfPeriod.set(Calendar.MINUTE, 59)
+            endOfPeriod.set(Calendar.SECOND, 59)
+            endOfPeriod.set(Calendar.MILLISECOND, 999)
+        }
+        PeriodType.MONTH -> {
+            // Set to start of selected month
+            startOfPeriod.set(year, month, 1, 0, 0, 0)
+            startOfPeriod.set(Calendar.MILLISECOND, 0)
+
+            // Set to end of selected month
+            endOfPeriod.set(year, month, 1, 23, 59, 59)
+            endOfPeriod.set(Calendar.MILLISECOND, 999)
+            endOfPeriod.set(Calendar.DAY_OF_MONTH, endOfPeriod.getActualMaximum(Calendar.DAY_OF_MONTH))
+        }
+        PeriodType.YEAR -> {
+            // Set to start of selected year
+            startOfPeriod.set(year, 0, 1, 0, 0, 0)
+            startOfPeriod.set(Calendar.MILLISECOND, 0)
+
+            // Set to end of selected year
+            endOfPeriod.set(year, 11, 31, 23, 59, 59)
+            endOfPeriod.set(Calendar.MILLISECOND, 999)
+        }
+    }
+
+    var totalIncome = 0f
+
+    incomes.forEach { income ->
+        val incomeCalendar = Calendar.getInstance().apply {
+            timeInMillis = income.timestamp
+        }
+
+        if (incomeCalendar.timeInMillis >= startOfPeriod.timeInMillis &&
+            incomeCalendar.timeInMillis <= endOfPeriod.timeInMillis
+        ) {
+            totalIncome += income.amount
+        }
+    }
+
+    return totalIncome
 }
