@@ -23,6 +23,7 @@ import com.example.financeapplication.classes.NecessityLevel
 import com.example.financeapplication.datastores.SpendingDataStore
 import com.example.financeapplication.datastores.IncomeDataStore
 import com.example.financeapplication.datastores.UserPreferencesDataStore
+import com.example.financeapplication.datastores.WishlistDatastore
 import com.example.financeapplication.ui.theme.appColors
 import java.util.Calendar
 
@@ -37,6 +38,12 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
 
     val savingsFlow = UserPreferencesDataStore.getSavingsBalance(context)
     val currentSavings by savingsFlow.collectAsState(initial = 0f)
+
+    val wishlistItemsFlow = WishlistDatastore.getWishlistItems(context)
+    val wishlistItems by wishlistItemsFlow.collectAsState(initial = emptyList())
+    val wishlistTotal = wishlistItems.sumOf { it.price.toDouble() }.toFloat()
+
+    val overallBalance = currentBalance + currentSavings
 
     val spendingsFlow = SpendingDataStore.getSpendings(context)
     val spendings by spendingsFlow.collectAsState(initial = emptyList())
@@ -77,6 +84,60 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
             )
         }
 
+        // Overall balance card (Savings + Balance)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Overall Balance",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.placeholderText
+                )
+                Text(
+                    text = "$${String.format("%.2f", overallBalance)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.primaryText
+                )
+            }
+        }
+
+        // Balance card (current balance)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Balance",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.placeholderText
+                )
+                Text(
+                    text = "$${String.format("%.2f", currentBalance)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.primaryText
+                )
+            }
+        }
+
         // Savings balance card
         Card(
             modifier = Modifier
@@ -104,7 +165,7 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
             }
         }
 
-        // Overall balance card
+        // Wishlist total card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -119,12 +180,12 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Overall Balance",
+                    text = "Wishlist Total",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.placeholderText
                 )
                 Text(
-                    text = "$${String.format("%.2f", currentBalance)}",
+                    text = "$${String.format("%.2f", wishlistTotal)}",
                     style = MaterialTheme.typography.headlineSmall,
                     color = colors.primaryText
                 )
@@ -133,7 +194,7 @@ fun OverviewScreen(onBackPress: () -> Unit = {}) {
 
         // Period selection
         Text(
-            text = "Spending Overview",
+            text = "Period Overview",
             style = MaterialTheme.typography.titleLarge,
             color = colors.primaryText,
             modifier = Modifier.padding(bottom = 12.dp)

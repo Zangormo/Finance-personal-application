@@ -95,46 +95,46 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
                         unfocusedPlaceholderColor = colors.placeholderText
                     )
                 )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                OutlinedTextField(
-                    value = inputPrice,
-                    onValueChange = { newValue ->
-                        val filtered = if (newValue.isEmpty()) {
-                            ""
-                        } else {
-                            val parts = newValue.replace(',', '.').split('.')
-                            when {
-                                parts.size > 2 -> inputPrice
-                                parts.size == 2 && parts[1].length > 2 -> inputPrice
-                                else -> newValue
-                            }
-                        }
-                        inputPrice = filtered
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Price (optional)", color = colors.primaryText) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = colors.primaryText,
-                        unfocusedTextColor = colors.primaryText,
-                        cursorColor = colors.primaryText,
-                        focusedBorderColor = colors.border,
-                        unfocusedBorderColor = colors.border,
-                        focusedPlaceholderColor = colors.placeholderText,
-                        unfocusedPlaceholderColor = colors.placeholderText
-                    )
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
+
+                Spacer(modifier = Modifier.height(14.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FloatingActionButton(
+                    OutlinedTextField(
+                        value = inputPrice,
+                        onValueChange = { newValue ->
+                            val filtered = if (newValue.isEmpty()) {
+                                ""
+                            } else {
+                                val parts = newValue.replace(',', '.').split('.')
+                                when {
+                                    parts.size > 2 -> inputPrice
+                                    parts.size == 2 && parts[1].length > 2 -> inputPrice
+                                    else -> newValue
+                                }
+                            }
+                            inputPrice = filtered
+                        },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Price (optional)", color = colors.primaryText) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = colors.primaryText,
+                            unfocusedTextColor = colors.primaryText,
+                            cursorColor = colors.primaryText,
+                            focusedBorderColor = colors.border,
+                            unfocusedBorderColor = colors.border,
+                            focusedPlaceholderColor = colors.placeholderText,
+                            unfocusedPlaceholderColor = colors.placeholderText
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    IconButton(
                         onClick = {
                             if (inputText.isNotBlank()) {
                                 val price = inputPrice.replace(',', '.').toFloatOrNull() ?: 0f
@@ -145,16 +145,17 @@ fun WishlistScreen(onBackPress: () -> Unit = {}) {
                                 }
                             }
                         },
-                        containerColor = Color.Transparent,
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp)
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = colors.primaryText
+                        )
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add", tint = colors.primaryText)
+                        Icon(Icons.Default.Add, contentDescription = "Add")
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Items List
         if (wishlistItems.isEmpty()) {
