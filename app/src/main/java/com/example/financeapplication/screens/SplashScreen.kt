@@ -27,7 +27,6 @@ fun SplashScreen(
 ) {
     val context = LocalContext.current
     var showAnimation by remember { mutableStateOf(false) }
-    var screenDetermined by remember { mutableStateOf(false) }
     
     val isFirstRunState by UserPreferencesDataStore.isFirstRun(context)
         .collectAsState(initial = null)
@@ -41,7 +40,6 @@ fun SplashScreen(
     LaunchedEffect(isFirstRunState) {
         if (isFirstRunState != null) {
             delay(800)
-            screenDetermined = true
             showAnimation = true
 
             delay(500)

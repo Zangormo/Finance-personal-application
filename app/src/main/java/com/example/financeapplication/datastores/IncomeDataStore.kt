@@ -54,4 +54,58 @@ object IncomeDataStore {
             prefs[INCOMES_KEY] = gson.toJson(current)
         }
     }
+
+    suspend fun updateIncome(context: Context, oldIncome: IncomeRecord, newAmount: Float, newDescription: String) {
+        context.dataStoreIncome.edit { prefs ->
+            val json = prefs[INCOMES_KEY] ?: ""
+            val current = try {
+                if (json.isNotEmpty()) {
+                    gson.fromJson(json, Array<IncomeRecord>::class.java).toMutableList()
+                } else {
+                    mutableListOf()
+                }
+            } catch (_: Exception) {
+                mutableListOf()
+            }
+            
+            val index = current.indexOfFirst { 
+                it.timestamp == oldIncome.timestamp && 
+                it.amount == oldIncome.amount && 
+                it.description == oldIncome.description 
+            }
+            
+            if (index != -1) {
+                current[index] = IncomeRecord(
+                    amount = newAmount,
+                    description = newDescription,
+                    timestamp = oldIncome.timestamp
+                )
+            }
+            
+            prefs[INCOMES_KEY] = gson.toJson(current)
+        }
+    }
+
+    suspend fun deleteIncome(context: Context, income: IncomeRecord) {
+        context.dataStoreIncome.edit { prefs ->
+            val json = prefs[INCOMES_KEY] ?: ""
+            val current = try {
+                if (json.isNotEmpty()) {
+                    gson.fromJson(json, Array<IncomeRecord>::class.java).toMutableList()
+                } else {
+                    mutableListOf()
+                }
+            } catch (_: Exception) {
+                mutableListOf()
+            }
+            
+            current.removeAll { 
+                it.timestamp == income.timestamp && 
+                it.amount == income.amount && 
+                it.description == income.description 
+            }
+            
+            prefs[INCOMES_KEY] = gson.toJson(current)
+        }
+    }
 }

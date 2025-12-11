@@ -57,4 +57,57 @@ object SpendingDataStore {
             prefs[SPENDINGS_KEY] = gson.toJson(current)
         }
     }
+
+    suspend fun updateSpending(context: Context, oldSpending: SpendingRecord, newAmount: Float, newItems: List<String>, newNecessity: NecessityLevel = NecessityLevel.NECESSARY) {
+        context.dataStoreSpending.edit { prefs ->
+            val json = prefs[SPENDINGS_KEY] ?: ""
+            val current = try {
+                if (json.isNotEmpty()) {
+                    gson.fromJson(json, Array<SpendingRecord>::class.java).toMutableList()
+                } else {
+                    mutableListOf()
+                }
+            } catch (_: Exception) {
+                mutableListOf()
+            }
+            
+            val index = current.indexOfFirst { 
+                it.timestamp == oldSpending.timestamp && 
+                it.amount == oldSpending.amount 
+            }
+            
+            if (index != -1) {
+                current[index] = SpendingRecord(
+                    amount = newAmount,
+                    items = newItems,
+                    timestamp = oldSpending.timestamp,
+                    necessity = newNecessity
+                )
+            }
+            
+            prefs[SPENDINGS_KEY] = gson.toJson(current)
+        }
+    }
+
+    suspend fun deleteSpending(context: Context, spending: SpendingRecord) {
+        context.dataStoreSpending.edit { prefs ->
+            val json = prefs[SPENDINGS_KEY] ?: ""
+            val current = try {
+                if (json.isNotEmpty()) {
+                    gson.fromJson(json, Array<SpendingRecord>::class.java).toMutableList()
+                } else {
+                    mutableListOf()
+                }
+            } catch (_: Exception) {
+                mutableListOf()
+            }
+            
+            current.removeAll { 
+                it.timestamp == spending.timestamp && 
+                it.amount == spending.amount 
+            }
+            
+            prefs[SPENDINGS_KEY] = gson.toJson(current)
+        }
+    }
 }
