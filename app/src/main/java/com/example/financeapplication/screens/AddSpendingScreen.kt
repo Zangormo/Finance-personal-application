@@ -6,8 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,11 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.clickable
 import com.example.financeapplication.classes.NecessityLevel
@@ -65,83 +61,72 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
     var withdrawError by remember { mutableStateOf("") }
     var insufficientFundsMessage by remember { mutableStateOf("") }
 
-    val scrollState = rememberScrollState()
-    val density = LocalDensity.current
-    val imeHeight = WindowInsets.ime.getBottom(density)
-    val keyboardOffset = with(density) { (imeHeight * 0.3f).toDp() }
-
     // Calculate total price of selected items with prices
     val totalSelectedPrice = selectedItems.sumOf { itemName ->
         wishlistItems.find { it.name == itemName }?.price?.toDouble() ?: 0.0
     }.toFloat()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = keyboardOffset)
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Header and balance in a non-scrollable section
-        Column(
+        // Header with back button
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header with back button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { onBackPress() }) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = colors.primaryText
-                    )
-                }
-                Text(
-                    text = "Add Spending",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = colors.primaryText,
-                    modifier = Modifier.padding(start = 8.dp)
+            IconButton(onClick = { onBackPress() }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = colors.primaryText
                 )
             }
+            Text(
+                text = "Add Spending",
+                style = MaterialTheme.typography.headlineLarge,
+                color = colors.primaryText,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
 
-            // Current balance display
-            Card(
+        // Current balance display
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Current Balance",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.placeholderText
-                    )
-                    Text(
-                        text = "$${String.format("%.2f", currentBalance)}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = colors.primaryText
-                    )
-                }
+                Text(
+                    text = "Current Balance",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.placeholderText
+                )
+                Text(
+                    text = "$${String.format("%.2f", currentBalance)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colors.primaryText
+                )
             }
         }
 
-        // Scrollable content area
+        // Scrollable content area (essentials + wishlist items)
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(horizontal = 16.dp)
+                .imePadding()
         ) {
             // Essentials Section
             if (essentials.isNotEmpty()) {
@@ -150,7 +135,7 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
                         text = "Essentials",
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.primaryText,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                        modifier = Modifier.padding(bottom = 12.dp, top = 8.dp)
                     )
                 }
                 items(essentials) { item ->
@@ -199,19 +184,15 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
                 }
             }
         }
-
-        // Fixed bottom section with amount input and button
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(16.dp)
-        ) {
-            // Amount input
+            modifier = Modifier.imePadding()
+        )
+        {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
@@ -308,99 +289,107 @@ fun AddSpendingScreen(onBackPress: () -> Unit = {}) {
                         )
                     }
                 }
-            }            // Add Spending button
-            Button(
-                onClick = {
-                    val sanitizedText = amountText.replace(',', '.')
-                    val amount = sanitizedText.toFloatOrNull()
+                Button(
+                    onClick = {
+                        val sanitizedText = amountText.replace(',', '.')
+                        val amount = sanitizedText.toFloatOrNull()
 
-                    when {
-                        amount == null -> {
-                            isError = true
-                            errorMessage = "Please enter a valid amount (e.g. 100.00)"
-                        }
-                        amount <= 0 -> {
-                            isError = true
-                            errorMessage = "Amount must be greater than 0"
-                        }
-                        else -> {
-                            val roundedAmount = (amount * 100).roundToInt() / 100f
-                            
-                            // Check if we have enough balance for wishlist items with prices
-                            if (totalSelectedPrice > currentBalance) {
-                                val deficit = totalSelectedPrice - currentBalance
-                                // Check if savings can cover the deficit
-                                if (savingsBalance >= deficit) {
-                                    // Show dialog to withdraw from savings
-                                    insufficientFundsMessage = ""
-                                    withdrawAmount = String.format("%.2f", deficit)
-                                    showWithdrawDialog = true
-                                } else {
-                                    // Not enough even with savings
-                                    val totalAvailable = currentBalance + savingsBalance
-                                    insufficientFundsMessage = "Insufficient funds for selected items! You need $${String.format("%.2f", totalSelectedPrice)} but have only $${String.format("%.2f", totalAvailable)} available (balance: $${String.format("%.2f", currentBalance)} + savings: $${String.format("%.2f", savingsBalance)})"
-                                }
-                            } else {
-                                // Enough balance, proceed with spending
-                                scope.launch {
-                                    // Add spending record
-                                    SpendingDataStore.addSpending(
-                                        context,
-                                        roundedAmount,
-                                        selectedItems.toList(),
-                                        necessityLevel
-                                    )
-
-                                    // Update balance (subtract spent amount + wishlist prices)
-                                    UserPreferencesDataStore.updateBalance(context, -(roundedAmount + totalSelectedPrice))
-
-                                    // Remove selected items from essentials and wishlist
-                                    selectedItems.forEach { item ->
-                                        if (essentials.contains(item)) {
-                                            EssentialsDataStore.removeEssential(context, item)
-                                        }
-                                        val wishlistItem = wishlistItems.find { it.name == item }
-                                        if (wishlistItem != null) {
-                                            WishlistDatastore.removeWishlistItem(context, item)
-                                        }
+                        when {
+                            amount == null -> {
+                                isError = true
+                                errorMessage = "Please enter a valid amount (e.g. 100.00)"
+                            }
+                            amount <= 0 -> {
+                                isError = true
+                                errorMessage = "Amount must be greater than 0"
+                            }
+                            else -> {
+                                val roundedAmount = (amount * 100).roundToInt() / 100f
+                                // Check if we have enough balance for wishlist items with prices
+                                if (totalSelectedPrice > currentBalance) {
+                                    val deficit = totalSelectedPrice - currentBalance
+                                    // Check if savings can cover the deficit
+                                    if (savingsBalance >= deficit) {
+                                        // Show dialog to withdraw from savings
+                                        insufficientFundsMessage = ""
+                                        withdrawAmount = String.format("%.2f", deficit)
+                                        showWithdrawDialog = true
+                                    } else {
+                                        // Not enough even with savings
+                                        val totalAvailable = currentBalance + savingsBalance
+                                        insufficientFundsMessage = "Insufficient funds for selected items! You need $${String.format("%.2f", totalSelectedPrice)} but have only $${String.format("%.2f", totalAvailable)} available (balance: $${String.format("%.2f", currentBalance)} + savings: $${String.format("%.2f", savingsBalance)})"
                                     }
+                                } else {
+                                    // Enough balance, proceed with spending
+                                    scope.launch {
+                                        // Add spending record
+                                        SpendingDataStore.addSpending(
+                                            context,
+                                            roundedAmount,
+                                            selectedItems.toList(),
+                                            necessityLevel
+                                        )
 
-                                    // Navigate back
-                                    onBackPress()
+                                        // Update balance (subtract spent amount + wishlist prices)
+                                        UserPreferencesDataStore.updateBalance(context, -(roundedAmount + totalSelectedPrice))
+
+                                        // Remove selected items from essentials and wishlist
+                                        selectedItems.forEach { item ->
+                                            if (essentials.contains(item)) {
+                                                EssentialsDataStore.removeEssential(context, item)
+                                            }
+                                            val wishlistItem = wishlistItems.find { it.name == item }
+                                            if (wishlistItem != null) {
+                                                WishlistDatastore.removeWishlistItem(context, item)
+                                            }
+                                        }
+
+                                        // Navigate back
+                                        onBackPress()
+                                    }
                                 }
                             }
                         }
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = colors.primaryText
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Add Spending")
-            }
-
-            // Show insufficient funds message
-            if (insufficientFundsMessage.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = colors.primaryText
+                    ),
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF4A1E1E)
-                    )
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp)
                 ) {
-                    Text(
-                        text = insufficientFundsMessage,
-                        color = Color(0xFFFF6B6B),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Text("Add Spending")
+                }
+
+                // Show insufficient funds message
+                if (insufficientFundsMessage.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 8.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF4A1E1E)
+                        )
+                    ) {
+                        Text(
+                            text = insufficientFundsMessage,
+                            color = Color(0xFFFF6B6B),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
                 }
             }
         }
+        // Bottom section - input fields and button (naturally at bottom of Column)
+
+
+        // Add Spending button
+
     }
 
     // Withdraw from Savings Dialog
