@@ -19,7 +19,11 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -57,7 +61,6 @@ class MainActivity : ComponentActivity() {
                 var startDestination by remember { mutableStateOf<String?>(null) }
 
                 if (isFirstRunState != null && startDestination != null) {
-                    // Основной контент приложения после splash screen
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         NavHost(
                             navController = navController,
@@ -129,17 +132,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+data class MenuItem(val title: String, val icon: ImageVector)
+
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, onTileClick: (String) -> Unit) {
     val items = listOf(
-        "Essentials",
-        "Wishlist",
-        "Add spending",
-        "Add income",
-        "Savings",
-        "Overview",
-        "Spending history",
-        "Income history"
+        MenuItem("Essentials", Icons.Filled.Home),
+        MenuItem("Wishlist", Icons.Filled.Star),
+        MenuItem("Add spending", Icons.Filled.ShoppingCart),
+        MenuItem("Add income", Icons.Filled.Add),
+        MenuItem("Savings", Icons.Filled.AccountBox),
+        MenuItem("Overview", Icons.Filled.Info),
+        MenuItem("Spending history", Icons.Filled.List),
+        MenuItem("Income history", Icons.Filled.ArrowForward)
     )
 
     LazyVerticalGrid(
@@ -154,14 +159,18 @@ fun MainScreen(modifier: Modifier = Modifier, onTileClick: (String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(items) { title ->
-            TileItem(title = title, onClick = { onTileClick(title) })
+        items(items) { menuItem ->
+            TileItem(
+                title = menuItem.title,
+                icon = menuItem.icon,
+                onClick = { onTileClick(menuItem.title) }
+            )
         }
     }
 }
 
 @Composable
-fun TileItem(title: String, onClick: () -> Unit) {
+fun TileItem(title: String, icon: ImageVector, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -169,11 +178,23 @@ fun TileItem(title: String, onClick: () -> Unit) {
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
